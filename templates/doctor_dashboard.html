@@ -1,0 +1,21 @@
+{ % extends "base.html" %}
+{ % block content % }
+
+<h2>Docotr Dashboard</h2>
+
+{ % for a in appointments % }
+Patient : {{ a.patient.name }} <br>
+Date : {{ a.date }} <br>
+Time : {{ a.time }} <br>
+Status : {{ a.status }} <br>
+
+<a href="/doctor/appointment/{{ a.id }}/complete">Complete</a>
+<a href="/doctor/appointment/{{ a.id }}/cancel">Cancel</a>
+<a href="/doctor/appointment/{{ a.id }}">Add Treatment</a>
+
+<hr>
+{ % endfor % }
+
+<a href="/docotr/availability">Update Availability</a>
+
+{ % endblock % }

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Add Treatment</h3>
+
+<form method="POST">
+
+Diagnosis:<br>
+<textarea name="diagnosis"></textarea><br>
+
+Prescription:<br>
+<textarea name="prescription"></textarea><br>
+
+Notes:<br>
+<textarea name="notes"></textarea><br>
+
+<button type="submit">Save</button>
+
+</form>
+
+{% endblock %}

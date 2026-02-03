@@ -3,7 +3,7 @@ from database import db            #Imports the db object you created
                                    #This connects Flask to your database
 from models import Doctor , Patient , Appointment
 from werkzeug.security import generate_password_hash
-
+from datetime import date , timedelta
 
 
 
@@ -140,7 +140,7 @@ def create_app():          #It creates and returns the Flask app
         return redirect(url_for('admin_dashboard'))
     
 
-    
+
     
     @app.route('/admin/patients/disable/<int:id>')
     def disable_patient(id):
@@ -148,6 +148,115 @@ def create_app():          #It creates and returns the Flask app
         patient.is_active = False
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
+
+
+
+
+
+    @app.route('/doctor/dashboard')
+    def doctor_dashboard():
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+        
+        doctor_id = session['user_id']
+
+        today = date.today()
+        week_later = today + timedelta(days=7)
+
+        appointments  =Appointment.query.filter(Appointment.doctor_id == doctor_id , Appointment.date >= today , Appointment.date , Appointment.date <=week_later).all()
+        return render_template('doctor_dashboard.html' , appointments = appointments)
+
+
+
+
+    @app.route('/doctor/appointment/<int:id>/complete')
+    def complete_appointment(id):
+
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+
+        appt = Appointment.query.get(id)
+        appt.status = "Completed"
+        db.session.commit()
+
+        return redirect(url_for('doctor_dashboard'))
+
+
+
+    @app.route('/doctor/appointment/<int:id>/cancel')
+    def cancel_appointment(id):
+
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+
+        appt = Appointment.query.get(id)
+        appt.status = "Cancelled"
+        db.session.commit()
+
+        return redirect(url_for('doctor_dashboard'))
+
+
+
+
+    @app.route('/doctor/treatment/<int:appt_id>', methods=['GET','POST'])
+    def add_treatment(appt_id):
+
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+
+        if request.method == 'POST':
+
+            treatment = Treatment(
+                appointment_id=appt_id,
+                diagnosis=request.form['diagnosis'],
+                prescription=request.form['prescription'],
+                notes=request.form['notes']
+            )
+
+            db.session.add(treatment)
+            db.session.commit()
+
+            return redirect(url_for('doctor_dashboard'))
+
+        return render_template('doctor_treatment.html')
+
+
+
+
+    @app.route('/doctor/patient/<int:patient_id>/history')
+    def patient_history(patient_id):
+
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+
+        treatments = Treatment.query.join(Appointment).filter(
+            Appointment.patient_id == patient_id
+        ).all()
+        return render_template('doctor_history.html', treatments=treatments)
+    
+
+
+    
+
+    @app.route('/doctor/availability', methods=['GET','POST'])
+    def doctor_availability():
+
+        if session.get('role') != 'doctor':
+            return redirect(url_for('auth.login'))
+
+        if request.method == 'POST':
+
+            for d in request.form.getlist('dates'):
+                av = DoctorAvailability(
+                    doctor_id=session['user_id'],
+                    date=d
+                )
+                db.session.add(av)
+
+            db.session.commit()
+            return redirect(url_for('doctor_dashboard'))
+
+        return render_template('doctor_availability.html')
 
 
 

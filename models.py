@@ -68,6 +68,16 @@ class Treatment(db.Model):
 
 
 
+
+class DoctorAvailability(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer,db.ForeignKey('doctor.id'),nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    is_available = db.Column(db.Boolean, default=True)
+
+
+
+
 def create_admin_if_not_exists():
     from database import db
     admin = Admin.query.filter_by(username="admin").first()
