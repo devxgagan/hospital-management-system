@@ -1,6 +1,11 @@
 from flask import Flask , render_template , url_for , session , redirect           #Flask = the main web app framework
 from database import db            #Imports the db object you created
                                    #This connects Flask to your database
+from models import Doctor , Patient , Appointment
+from werkzeug.security import generate_password_hash
+
+
+
 
 def create_app():          #It creates and returns the Flask app
     app=Flask(__name__)    #Creates a Flask application
@@ -18,12 +23,23 @@ def create_app():          #It creates and returns the Flask app
     from auth import auth
     app.register_blueprint(auth)
 
+
+
+
     # ✅ ADMIN DASHBOARD
     @app.route('/admin/dashboard')
     def admin_dashboard():
         if session.get('role') != 'admin':
             return redirect(url_for('auth.login'))
-        return render_template('admin_dashboard.html')
+        
+        doctor_count = Doctor.query.count()
+        patient_count = Patient.query.count()
+        appointment_count = Appointment.query.count()
+
+        return render_template('admin_dashboard.html' , doctor_count=doctor_count , patient_count=patient_count , appointment_count=appointment_count)
+
+
+
 
     # ✅ DOCTOR DASHBOARD
     @app.route('/doctor/dashboard')
@@ -32,13 +48,111 @@ def create_app():          #It creates and returns the Flask app
             return redirect(url_for('auth.login'))
         return render_template('doctor_dashboard.html')
 
+
+
+
     # ✅ PATIENT DASHBOARD
     @app.route('/patient/dashboard')
     def patient_dashboard():
         if session.get('role') != 'patient':
             return redirect(url_for('auth.login'))
         return render_template('patient_dashboard.html')
+
+
+
+
+    @app.route('/admin/doctor/add' , methods=['GET' , 'POST'])
+    def add_doctor():
+        if session.get('role') !='admin':
+            return redirect(url_for('auth.login'))
+        
+        if request.method == 'POST':
+            name = request.form['name']
+            email = request.form['email']
+            password = generate_password_hash(request.form['password'])
+            dept_id = request.form['department_id']
+
+
+            doctor = Doctor(name=name , email=email , password=password , department_id=dept_id)
+
+            db.session.add(doctor)
+            db.session.commit()
+
+            return redirect(url_for('admin_dashboard'))
+
+        departments = Department.query.all()
+        return render_template('admin_add_doctor.html', departments=departments)
+
+
+
+
+    @app.route('/admin/doctors/edit/<int:id>' , methods=['GET' , 'POST'])
+    def edit_doctor(id):
+        if session.get('role') != 'admin':
+            return redirect(url_for('auth.login'))
+        
+        doctor = Doctor.query.get_or_404(id)
+
+        if request.method == 'POST' :
+            doctor.name = request.form['name']
+            doctor.name = request.form['email']
+            db.session.commit()
+
+            return redirect(url_for('admin_dashboard'))
+        
+        return render_template('admin_edit_doctor.html' , doctor=doctor)
+
+
+
+
+    @app.route('/admin/appointments')
+    def admin_appointments():
+        if session.get('role') != 'admin' :
+            return redirect(url_for('auth.login'))
+        
+        appointments = Appointment.query.order_by(Appointment.date).all()
+        return render_template('admin_appointments.html' , appointments=appointments)
+
+
+
+
+    @app.route('/admin/search')
+    def admin_search():
+        if session.get('role') != 'admin':
+            return redirect(url_for('auth.login'))
+        
+        q = request.args.get('q' , '')
+
+        doctors = Doctor.query.filter(Doctor.name.contains(q)).all()
+
+        patients = Patient.query.filter(Patient.name.contains(q)).all()
+
+        return render_template('admin_search.html' , doctors=doctors , patients=patients)
+
+
+
+
+    @app.route('/admin/doctors/disable/<int:id>')
+    def disable_doctor(id):
+        doctor = Doctor.query.get(id)
+        doctor.is_active = False
+        db.session.commit()
+        return redirect(url_for('admin_dashboard'))
     
+
+    
+    
+    @app.route('/admin/patients/disable/<int:id>')
+    def disable_patient(id):
+        patient = Patient.query.get(id)
+        patient.is_active = False
+        db.session.commit()
+        return redirect(url_for('admin_dashboard'))
+
+
+
+
+
     with app.app_context():
         import models       #Imports all database models (tables)
         db.create_all()

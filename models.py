@@ -26,6 +26,7 @@ class Doctor(db.Model):
     password = db.Column(db.String(200) , nullable=False)
     experience_years = db.Column(db.Integer)
     department_id = db.Column(db.Integer , db.ForeignKey('department.id'))
+    is_active = db.Column(db.Boolean , default=True)
 
     appointments = db.relationship('Appointment' , backref='doctor' , lazy=True)
 
@@ -38,6 +39,7 @@ class Patient(db.Model):
     email = db.Column(db.String(120) , unique=True , nullable=False)
     password = db.Column(db.String(200) , nullable=False)
     contact = db.Column(db.String(15))
+    is_active = db.Column(db.Boolean, default=True)
 
     appointments = db.relationship('Appointment' , backref='patient' , lazy=True)
 

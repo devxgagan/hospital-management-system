@@ -1,0 +1,11 @@
+<h3>Appointments</h3>
+
+{ %for a in appointments% }
+Doctor : {{ a.doctor.name }}
+Patient : {{ a.patient.name }}
+Date : {{ a.date }}
+Status : {{ a.status}}
+
+<hr>
+
+{ % endfor % }

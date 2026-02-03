@@ -1,0 +1,15 @@
+<h3>Add Doctor</h3>
+<form method="POST">
+    Name : <input name="name"><br>
+    Email : <input name="email"><br>
+    Password : <input name="password"><br>
+     
+    Department:
+    <select name="department_id">
+        { % for d in departments % }
+        <option value="{{ d.id }}">{{ d.name }}</option>
+        { % endfor % }
+    </select>
+
+    <button type="submit">Add Doctor</button>
+</form>
